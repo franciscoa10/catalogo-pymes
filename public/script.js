@@ -57,6 +57,7 @@ function updateCart() {
   updatePayphoneButton(total, amountWithoutTax);
 }
 
+//este es el metodo donde se agrega ell tokend de pyphone y el storeid
 function updatePayphoneButton(total, amountWithoutTax) {
   payphoneContainer.innerHTML = "";
 
