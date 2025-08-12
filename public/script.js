@@ -61,132 +61,53 @@ function updatePayphoneButton(total, amountWithoutTax) {
   payphoneContainer.innerHTML = "";
 
   if (total > 0) {
-    const wrapper = document.createElement("div");
-    wrapper.className = "payment-wrapper";
-
-    const title = document.createElement("h3");
-    title.textContent = "💼 Simulación de pago para PYMEs";
-    title.className = "payment-title";
-    wrapper.appendChild(title);
-
-    const methodLabel = document.createElement("p");
-    methodLabel.textContent = "Selecciona el método de pago:";
-    methodLabel.className = "payment-label";
-    wrapper.appendChild(methodLabel);
-
-    const buttonContainer = document.createElement("div");
-    buttonContainer.className = "payment-methods";
-
-    const formContainer = document.createElement("div");
-    formContainer.className = "payment-form";
-
-    // Botón tarjeta
-    const cardButton = document.createElement("button");
-    cardButton.textContent = "💳 Tarjeta de crédito";
-    cardButton.className = "payment-button green";
-    cardButton.onclick = () => {
-      formContainer.innerHTML = `
-  <form class="form-box">
-    <label>Nombre en la tarjeta</label>
-    <input type="text" required>
-    
-    <label>Número de tarjeta</label>
-    <input type="text" maxlength="16" required>
-    
-    <label>Vencimiento (MM/AA)</label>
-    <input type="text" maxlength="5" required>
-    
-    <label>CVV</label>
-    <input type="text" maxlength="3" required>
-    
-    <button type="submit" class="confirm-button green">Confirmar pago de $${total.toFixed(2)}</button>
-  </form>
-`; formContainer.querySelector("form").onsubmit = (e) => {
-        e.preventDefault();
-        alert(`✅ Pago simulado con tarjeta\nMonto: $${total.toFixed(2)}`);
-        cart.length = 0;
-        updateCart();
-      };
-    };
-
-    // Botón teléfono
-    const phoneButton = document.createElement("button");
-    phoneButton.textContent = "📱 Número telefónico";
-    phoneButton.className = "payment-button blue";
-    phoneButton.onclick = () => {
-      formContainer.innerHTML = `
-        <form class="form-box">
-          <label>Número de teléfono</label>
-          <input type="text" maxlength="10" required>
-          
-          <button type="submit" class="confirm-button blue">Confirmar pago de $${total.toFixed(2)}</button>
-        </form>
-      `;
-      formContainer.querySelector("form").onsubmit = (e) => {
-        e.preventDefault();
-        alert(`✅ Pago simulado con teléfono\nMonto: $${total.toFixed(2)}`);
-        cart.length = 0;
-        updateCart();
-      };
-    };
-
-    buttonContainer.appendChild(cardButton);
-    buttonContainer.appendChild(phoneButton);
-    wrapper.appendChild(buttonContainer);
-    wrapper.appendChild(formContainer);
-    payphoneContainer.appendChild(wrapper);
+    try {
+      const ppb = new PPaymentButtonBox({
+        token: 
+        '72M0DNrgN_ks6UwFFSs-dFx7uYzaCFtckHYMY0-iOqHpS0PnONt2Dgr7BPHrpO4MNnsokqUDSRdBmb6cvEgM9DqEPmIcfm_Rutuov35nfBaMrkbbpu49MdEnnZl6gm3jojZSUoGjntfTCI5tJJYIdOoxNWI9bbd_ChtJNngxOi--P_d3zqvlthiQsZH2C-Vig9fH-qBnf53fZMP_HazMSDaHimwigE2h8yqoakWJtRpjVpdg05ZZ1iUisxdoaBHj8ILI7yI4NwHnQWEhwOJ3G2Ey2OZDQS_632SdjVS2AUgVFF_N0Rj-4_P0YKq2J5nK_tVdQKSNrTOB17nv2P1BsJQJ3K4',
+        clientTransactionId: 'pedido_' + Date.now(),
+        amount: Math.round(total * 100),
+        amountWithoutTax: Math.round(amountWithoutTax * 100),
+        amountWithTax: 0,
+        tax: 0,
+        currency: "USD",
+        storeId: "a7ddd841-8773-4867-968c-cef6bfd143f9",
+        reference: "Compra de productos #" + Math.floor(Math.random() * 1000),
+        items: cart.map(item => ({
+          name: item.name,
+          price: Math.round(item.price * 100),
+          quantity: 1,
+          total: Math.round(item.price * 100)
+        })),
+        Handler: {
+          onSuccess: function(data) {
+            alert(`✅ Pago exitoso!\nID: ${data.TransactionId}\nMonto: $${(data.Amount/100).toFixed(2)}`);
+            cart.length = 0;
+            updateCart();
+          },
+          onError: function(error) {
+            alert("❌ Error en el pago: " + error.Message);
+          },
+          onClose: function() {
+            console.log("Modal de pago cerrado");
+          }
+        }
+      }).render('pp-button');
+    } catch (error) {
+      console.error("Error al inicializar PayPhone:", error);
+      const errorButton = document.createElement("button");
+      errorButton.textContent = `Pagar $${total.toFixed(2)} (Error PayPhone)`;
+      errorButton.className = "payphone-error-button";
+      errorButton.addEventListener("click", () => {
+        alert("El sistema de pago no está disponible temporalmente. Por favor intente más tarde.");
+      });
+      payphoneContainer.appendChild(errorButton);
+    }
   }
 }
 
 
-// function updatePayphoneButton(total, amountWithoutTax) {
-//   payphoneContainer.innerHTML = "";
 
-//   if (total > 0) {
-//     try {
-//       const ppb = new PPaymentButtonBox({
-//         token: 
-//         'Rd1aW15SnGNOrq5E-5KhvkxoYLcPZRLvdk9Nw8lS1Q8DXoGxxm8XQEk8p_3VGrZ7_lNiG7p3Me4LSG_-68TZYDIHSvxvOb-U9zLcalWtXJ8EXWCSr7C-I3AvCrH9j7sgcCZNaBsb9JbZdUO71H9Kxydex3JjOyTqisCrXiJx5qpiMTzygFyAj65MFwgQI7ZtuB07NtmRGc92hc0rdiF0-3LjG7gjJ5MmktZQC8BHRhMB6PVKjFacEciBYjy3jVJFLtV1SAo-RPLsAStaFRTuskM8QARVY9QpsfMS3zQfTwpdIEG903KiX5kHy7TPyGT35BwXSOzVfec6qQU5hIgYwejW5Js',
-//         clientTransactionId: 'pedido_' + Date.now(),
-//         amount: Math.round(total * 100),
-//         amountWithoutTax: Math.round(amountWithoutTax * 100),
-//         amountWithTax: 0,
-//         tax: 0,
-//         currency: "USD",
-//         storeId: "eb2fe88a-a0ff-46ed-88ff-c94bf43b85b6",
-//         reference: "Compra de productos #" + Math.floor(Math.random() * 1000),
-//         items: cart.map(item => ({
-//           name: item.name,
-//           price: Math.round(item.price * 100),
-//           quantity: 1,
-//           total: Math.round(item.price * 100)
-//         })),
-//         Handler: {
-//           onSuccess: function(data) {
-//             alert(`✅ Pago exitoso!\nID: ${data.TransactionId}\nMonto: $${(data.Amount/100).toFixed(2)}`);
-//             cart.length = 0;
-//             updateCart();
-//           },
-//           onError: function(error) {
-//             alert("❌ Error en el pago: " + error.Message);
-//           },
-//           onClose: function() {
-//             console.log("Modal de pago cerrado");
-//           }
-//         }
-//       }).render('pp-button');
-//     } catch (error) {
-//       console.error("Error al inicializar PayPhone:", error);
-//       const errorButton = document.createElement("button");
-//       errorButton.textContent = `Pagar $${total.toFixed(2)} (Error PayPhone)`;
-//       errorButton.className = "payphone-error-button";
-//       errorButton.addEventListener("click", () => {
-//         alert("El sistema de pago no está disponible temporalmente. Por favor intente más tarde.");
-//       });
-//       payphoneContainer.appendChild(errorButton);
-//     }
-//   }
-// }
 
 // Mostrar productos
 products.forEach(product => {
